@@ -11,7 +11,8 @@ A small browser jigsaw puzzle in TypeScript. Drag pieces onto the board: they sn
 ```sh
 npm install
 ./run.sh           # start the app and open it in your browser
-./build_and_test.sh  # unit tests + production build (same as CI)
+./build_and_test.sh  # format check, lint, unit tests, production build (same as CI)
+./create_code_coverage.sh  # test coverage summary + coverage/index.html
 ```
 
 - `src/puzzle.ts`: the pure puzzle model (pieces, edges, snapping, solved state), unit-tested in `tests/puzzle.test.ts`
