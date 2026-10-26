@@ -28,6 +28,8 @@ export interface Piece {
 
 export type Random = () => number;
 
+export type DropResult = "moved" | "snapped" | "locked" | "rejected" | "ignored";
+
 export class Puzzle {
   readonly pieces: Piece[] = [];
   readonly pieceWidth: number;
@@ -82,11 +84,12 @@ export class Puzzle {
   /**
    * Drop a piece at (x, y), having picked it up at `from`.
    * Over the board it snaps to the nearest cell: a loose piece already there swaps
-   * back to `from`; a locked piece there sends the dropped piece back instead.
+   * back to `from`. The drop is rejected (piece goes back to `from`) when a locked
+   * piece holds the cell or a neighbouring piece does not meet it tab-to-hole.
    * Any piece that ends up in its home cell locks.
    */
-  drop(piece: Piece, x: number, y: number, from: { x: number; y: number }): void {
-    if (piece.locked) return;
+  drop(piece: Piece, x: number, y: number, from: { x: number; y: number }): DropResult {
+    if (piece.locked) return "ignored";
     const cell = this.cellAt(x, y);
     if (!cell) {
       piece.x = x;
@@ -94,9 +97,10 @@ export class Puzzle {
     } else {
       const target = this.cellPosition(cell.row, cell.col);
       const occupant = this.pieces.find((p) => p !== piece && p.x === target.x && p.y === target.y);
-      if (occupant?.locked) {
+      if (occupant?.locked || !this.fitsNeighbours(piece, cell.row, cell.col, occupant)) {
         piece.x = from.x;
         piece.y = from.y;
+        return "rejected";
       } else {
         if (occupant) {
           occupant.x = from.x;
@@ -110,6 +114,28 @@ export class Puzzle {
       const home = this.home(p);
       if (p.x === home.x && p.y === home.y) p.locked = true;
     }
+    return piece.locked ? "locked" : cell ? "snapped" : "moved";
+  }
+
+  /** True when every piece already in a cell next to (row, col) meets this piece tab-to-hole. */
+  fitsNeighbours(piece: Piece, row: number, col: number, ignore?: Piece): boolean {
+    const sides: [number, number, keyof Edges, keyof Edges][] = [
+      [-1, 0, "top", "bottom"],
+      [0, 1, "right", "left"],
+      [1, 0, "bottom", "top"],
+      [0, -1, "left", "right"],
+    ];
+    return sides.every(([dr, dc, mine, theirs]) => {
+      const neighbour = this.pieceInCell(row + dr, col + dc);
+      if (!neighbour || neighbour === piece || neighbour === ignore) return true;
+      return piece.edges[mine] !== 0 && piece.edges[mine] === -neighbour.edges[theirs];
+    });
+  }
+
+  pieceInCell(row: number, col: number): Piece | undefined {
+    if (row < 0 || row >= this.size || col < 0 || col >= this.size) return undefined;
+    const { x, y } = this.cellPosition(row, col);
+    return this.pieces.find((p) => p.x === x && p.y === y);
   }
 
   placedCount(): number {

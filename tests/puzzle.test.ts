@@ -15,6 +15,10 @@ function newPuzzle(size = 4) {
   return new Puzzle(size, board, tray, seeded());
 }
 
+function at(puzzle: Puzzle, row: number, col: number) {
+  return puzzle.pieces.find((p) => p.row === row && p.col === col)!;
+}
+
 describe("Puzzle", () => {
   it("creates size × size pieces, all loose in the tray", () => {
     const puzzle = newPuzzle(4);
@@ -62,13 +66,27 @@ describe("Puzzle", () => {
     expect(puzzle.placedCount()).toBe(1);
   });
 
-  it("snaps a piece dropped on the wrong cell to the grid without locking", () => {
+  it("snaps a piece dropped on a wrong cell that it fits to the grid without locking", () => {
     const puzzle = newPuzzle(4);
-    const piece = puzzle.pieces[0]; // home (0, 0)
-    puzzle.drop(piece, 205, 297, { x: piece.x, y: piece.y });
-    expect([piece.x, piece.y]).toEqual([200, 300]);
+    const piece = at(puzzle, 1, 1); // interior piece, interior cell, no neighbours yet
+    puzzle.drop(piece, 205, 197, { x: piece.x, y: piece.y });
+    expect([piece.x, piece.y]).toEqual([200, 200]);
     expect(piece.locked).toBe(false);
   });
+
+  it("bounces back a piece whose tab or hole does not match a neighbour", () => {
+    const puzzle = newPuzzle(4);
+    const left = at(puzzle, 1, 1);
+    puzzle.drop(left, 100, 100, { x: left.x, y: left.y }); // locks at home
+    const misfit = puzzle.pieces.find(
+      (p) => p.row > 0 && p.row < 3 && p.col > 0 && p.col < 3 && p !== left && p.edges.left === left.edges.right,
+    )!;
+    const from = { x: misfit.x, y: misfit.y };
+    puzzle.drop(misfit, 200, 100, from);
+    expect([misfit.x, misfit.y]).toEqual([from.x, from.y]);
+  });
+
+
 
   it("leaves a piece where it was dropped when off the board", () => {
     const puzzle = newPuzzle(4);
@@ -77,21 +95,28 @@ describe("Puzzle", () => {
     expect([piece.x, piece.y]).toEqual([600, 50]);
   });
 
+  it("accepts a piece in the wrong place when it fits its neighbours", () => {
+    const puzzle = newPuzzle(4);
+    const corner = at(puzzle, 0, 0);
+    puzzle.drop(corner, 200, 200, { x: corner.x, y: corner.y }); // no neighbours: anything goes
+    expect([corner.x, corner.y]).toEqual([200, 200]);
+  });
+
   it("swaps with a loose piece already in the cell", () => {
     const puzzle = newPuzzle(4);
-    const [a, b] = puzzle.pieces; // homes (0,0) and (100,0)
-    puzzle.drop(a, 300, 300, { x: a.x, y: a.y });
+    const a = at(puzzle, 1, 1), b = at(puzzle, 1, 2); // interior pieces
+    puzzle.drop(a, 200, 200, { x: a.x, y: a.y });
     const bStart = { x: b.x, y: b.y };
-    puzzle.drop(b, 300, 300, bStart);
-    expect([b.x, b.y]).toEqual([300, 300]);
+    puzzle.drop(b, 200, 200, bStart);
+    expect([b.x, b.y]).toEqual([200, 200]);
     expect([a.x, a.y]).toEqual([bStart.x, bStart.y]);
   });
 
   it("swapping can lock the displaced piece when it lands home", () => {
     const puzzle = newPuzzle(4);
-    const [a, b] = puzzle.pieces; // homes (0,0) and (100,0)
-    puzzle.drop(a, 100, 0, { x: a.x, y: a.y }); // a sits in b's cell
-    puzzle.drop(b, 100, 0, { x: 0, y: 0 }); // b picked up from a's home
+    const a = at(puzzle, 1, 1), b = at(puzzle, 1, 2); // homes (100,100) and (200,100)
+    puzzle.drop(a, 200, 100, { x: a.x, y: a.y }); // a sits in b's cell
+    puzzle.drop(b, 200, 100, { x: 100, y: 100 }); // b picked up from a's home
     expect(a.locked).toBe(true);
     expect(b.locked).toBe(true);
   });
