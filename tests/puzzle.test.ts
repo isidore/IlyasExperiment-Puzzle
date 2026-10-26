@@ -16,7 +16,12 @@ function newPuzzle(size = 4) {
 }
 
 function at(puzzle: Puzzle, row: number, col: number) {
-  return puzzle.pieces.find((p) => p.row === row && p.col === col)!;
+  return found(puzzle.pieces.find((p) => p.row === row && p.col === col));
+}
+
+function found<T>(value: T | undefined): T {
+  if (value === undefined) throw new Error("expected a value");
+  return value;
 }
 
 describe("Puzzle", () => {
@@ -54,7 +59,7 @@ describe("Puzzle", () => {
 
   it("makes neighbouring edges fit: a tab meets a hole", () => {
     const puzzle = newPuzzle(4);
-    const at = (r: number, c: number) => puzzle.pieces.find((p) => p.row === r && p.col === c)!;
+    const at = (r: number, c: number) => found(puzzle.pieces.find((p) => p.row === r && p.col === c));
     for (let r = 0; r < 4; r++) {
       for (let c = 0; c < 4; c++) {
         if (c < 3) {
@@ -91,10 +96,12 @@ describe("Puzzle", () => {
     const puzzle = newPuzzle(4);
     const left = at(puzzle, 1, 1);
     puzzle.drop(left, 100, 100, { x: left.x, y: left.y }); // locks at home
-    const misfit = puzzle.pieces.find(
-      (p) =>
-        p.row > 0 && p.row < 3 && p.col > 0 && p.col < 3 && p !== left && p.edges.left === left.edges.right,
-    )!;
+    const misfit = found(
+      puzzle.pieces.find(
+        (p) =>
+          p.row > 0 && p.row < 3 && p.col > 0 && p.col < 3 && p !== left && p.edges.left === left.edges.right,
+      ),
+    );
     const from = { x: misfit.x, y: misfit.y };
     puzzle.drop(misfit, 200, 100, from);
     expect([misfit.x, misfit.y]).toEqual([from.x, from.y]);
