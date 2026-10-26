@@ -13,3 +13,4 @@ button, select { font: inherit; padding: 6px 12px; border-radius: 6px; border: 1
 .piece { position: absolute; z-index: 10; cursor: grab; filter: drop-shadow(0 2px 3px #0006); }
 .piece.locked { z-index: 1; cursor: default; filter: none; }
 .piece.dragging { z-index: 1000; cursor: grabbing; filter: drop-shadow(0 8px 10px #0008); }
+.shard { position: absolute; z-index: 2000; pointer-events: none; border-radius: 2px; }

@@ -114,11 +114,66 @@ function enableDragging(piece: Piece, canvas: HTMLCanvasElement): void {
       canvas.classList.remove("dragging");
       canvas.removeEventListener("pointermove", move);
       canvas.removeEventListener("pointerup", up);
-      puzzle.drop(piece, piece.x, piece.y, from);
+      const dropped = { x: piece.x, y: piece.y };
+      if (puzzle.drop(piece, dropped.x, dropped.y, from) === "rejected") {
+        explode(canvas, dropped.x + puzzle.pieceWidth / 2, dropped.y + puzzle.pieceHeight / 2);
+        flyBack(canvas);
+      }
       layout();
     };
     canvas.addEventListener("pointermove", move);
     canvas.addEventListener("pointerup", up);
+  });
+}
+
+/** Burst of picture-coloured shards at a world point. */
+function explode(source: HTMLCanvasElement, x: number, y: number): void {
+  const s = scale();
+  const g = source.getContext("2d")!;
+  for (let i = 0; i < 28; i++) {
+    const shard = document.createElement("div");
+    shard.className = "shard";
+    const px = (0.3 + Math.random() * 0.4) * source.width;
+    const py = (0.3 + Math.random() * 0.4) * source.height;
+    const [r, gr, b] = g.getImageData(px, py, 1, 1).data;
+    const size = 4 + Math.random() * 8;
+    const angle = Math.random() * Math.PI * 2;
+    const distance = (40 + Math.random() * 90) * s;
+    Object.assign(shard.style, {
+      left: `${x * s}px`,
+      top: `${y * s}px`,
+      width: `${size}px`,
+      height: `${size}px`,
+      background: `rgb(${r}, ${gr}, ${b})`,
+    });
+    stage.appendChild(shard);
+    shard
+      .animate(
+        [
+          { transform: "translate(-50%, -50%) scale(1) rotate(0deg)", opacity: 1 },
+          {
+            transform: `translate(calc(-50% + ${Math.cos(angle) * distance}px), calc(-50% + ${Math.sin(angle) * distance}px)) scale(0.3) rotate(${Math.random() * 720 - 360}deg)`,
+            opacity: 0,
+          },
+        ],
+        { duration: 600 + Math.random() * 300, easing: "cubic-bezier(.2,.7,.3,1)" },
+      )
+      .finished.then(() => shard.remove());
+  }
+}
+
+/** Animate a rejected piece from where it was dropped back to where layout() puts it. */
+function flyBack(canvas: HTMLCanvasElement): void {
+  const before = canvas.getBoundingClientRect();
+  requestAnimationFrame(() => {
+    const after = canvas.getBoundingClientRect();
+    canvas.animate(
+      [
+        { transform: `translate(${before.left - after.left}px, ${before.top - after.top}px) scale(0.6) rotate(-20deg)`, opacity: 0.2 },
+        { transform: "none", opacity: 1 },
+      ],
+      { duration: 450, easing: "cubic-bezier(.3,1.4,.5,1)" },
+    );
   });
 }
 
