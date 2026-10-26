@@ -29,6 +29,19 @@ describe("Puzzle", () => {
     }
   });
 
+  it("lays loose pieces out in the tray on a grid, without stacking them", () => {
+    const puzzle = newPuzzle(5);
+    for (const a of puzzle.pieces) {
+      for (const b of puzzle.pieces) {
+        if (a !== b) expect(Math.hypot(a.x - b.x, a.y - b.y)).toBeGreaterThan(puzzle.pieceWidth * 0.6);
+      }
+    }
+    for (const p of puzzle.pieces) {
+      expect(p.x).toBeLessThanOrEqual(tray.x + tray.width - puzzle.pieceWidth);
+      expect(p.y).toBeLessThanOrEqual(tray.y + tray.height - puzzle.pieceHeight);
+    }
+  });
+
   it("gives border pieces flat outer edges", () => {
     const puzzle = newPuzzle(3);
     for (const p of puzzle.pieces) {

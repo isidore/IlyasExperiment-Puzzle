@@ -45,13 +45,13 @@ export class Puzzle {
     this.pieceHeight = board.height / size;
     const right = randomEdges(size, size - 1, random); // right[r][c]: edge between (r,c) and (r,c+1)
     const down = randomEdges(size - 1, size, random); // down[r][c]: edge between (r,c) and (r+1,c)
+    const spots = shuffle(trayGrid(size * size, tray, this.pieceWidth, this.pieceHeight), random);
     for (let row = 0; row < size; row++) {
       for (let col = 0; col < size; col++) {
         this.pieces.push({
           row,
           col,
-          x: tray.x + random() * Math.max(0, tray.width - this.pieceWidth),
-          y: tray.y + random() * Math.max(0, tray.height - this.pieceHeight),
+          ...spots[row * size + col],
           locked: false,
           edges: {
             top: row > 0 ? opposite(down[row - 1][col]) : 0,
@@ -155,4 +155,24 @@ function randomEdges(rows: number, cols: number, random: Random): EdgeShape[][] 
   return Array.from({ length: rows }, () =>
     Array.from({ length: cols }, (): EdgeShape => (random() < 0.5 ? 1 : -1)),
   );
+}
+
+/** Evenly spaced spots filling the tray, one per piece, as close to square cells as the tray allows. */
+function trayGrid(count: number, tray: Rect, pieceWidth: number, pieceHeight: number): { x: number; y: number }[] {
+  const cols = Math.min(count, Math.ceil(Math.sqrt((count * tray.width) / tray.height)));
+  const rows = Math.ceil(count / cols);
+  const stepX = cols > 1 ? Math.max(0, tray.width - pieceWidth) / (cols - 1) : 0;
+  const stepY = rows > 1 ? Math.max(0, tray.height - pieceHeight) / (rows - 1) : 0;
+  return Array.from({ length: count }, (_, i) => ({
+    x: tray.x + (i % cols) * stepX,
+    y: tray.y + Math.floor(i / cols) * stepY,
+  }));
+}
+
+function shuffle<T>(items: T[], random: Random): T[] {
+  for (let i = items.length - 1; i > 0; i--) {
+    const j = Math.floor(random() * (i + 1));
+    [items[i], items[j]] = [items[j], items[i]];
+  }
+  return items;
 }
