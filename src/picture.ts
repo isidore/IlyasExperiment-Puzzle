@@ -4,7 +4,8 @@ export function drawPicture(width: number, height: number): HTMLCanvasElement {
   canvas.width = width;
   canvas.height = height;
   const g = canvas.getContext("2d")!;
-  const sx = width / 400, sy = height / 400;
+  const sx = width / 400,
+    sy = height / 400;
   g.scale(sx, sy);
 
   const sky = g.createLinearGradient(0, 0, 0, 400);
@@ -19,8 +20,20 @@ export function drawPicture(width: number, height: number): HTMLCanvasElement {
   g.arc(280, 150, 55, 0, Math.PI * 2);
   g.fill();
 
-  mountains(g, "#2d1e4f", [[0, 300], [90, 200], [170, 280], [260, 190], [400, 310]]);
-  mountains(g, "#1a1233", [[0, 350], [120, 290], [230, 340], [330, 300], [400, 340]]);
+  mountains(g, "#2d1e4f", [
+    [0, 300],
+    [90, 200],
+    [170, 280],
+    [260, 190],
+    [400, 310],
+  ]);
+  mountains(g, "#1a1233", [
+    [0, 350],
+    [120, 290],
+    [230, 340],
+    [330, 300],
+    [400, 340],
+  ]);
 
   g.fillStyle = "#fff";
   g.font = "bold 28px system-ui, sans-serif";

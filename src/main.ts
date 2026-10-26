@@ -89,7 +89,9 @@ function layout(): void {
 function isOpaqueAt(canvas: HTMLCanvasElement, clientX: number, clientY: number): boolean {
   const rect = canvas.getBoundingClientRect();
   const k = canvas.width / rect.width;
-  const alpha = canvas.getContext("2d")!.getImageData((clientX - rect.left) * k, (clientY - rect.top) * k, 1, 1).data[3];
+  const alpha = canvas
+    .getContext("2d")!
+    .getImageData((clientX - rect.left) * k, (clientY - rect.top) * k, 1, 1).data[3];
   return alpha > 10;
 }
 
@@ -98,7 +100,8 @@ function pieceAt(clientX: number, clientY: number): [Piece, HTMLCanvasElement] |
   const canvases = [...stage.querySelectorAll<HTMLCanvasElement>("canvas.piece:not(.locked)")].reverse();
   for (const canvas of canvases) {
     const rect = canvas.getBoundingClientRect();
-    if (clientX < rect.left || clientX >= rect.right || clientY < rect.top || clientY >= rect.bottom) continue;
+    if (clientX < rect.left || clientX >= rect.right || clientY < rect.top || clientY >= rect.bottom)
+      continue;
     if (!isOpaqueAt(canvas, clientX, clientY)) continue;
     const piece = [...views].find(([, v]) => v.canvas === canvas)![0];
     return [piece, canvas];
@@ -182,7 +185,10 @@ function flyBack(canvas: HTMLCanvasElement): void {
     const after = canvas.getBoundingClientRect();
     canvas.animate(
       [
-        { transform: `translate(${before.left - after.left}px, ${before.top - after.top}px) scale(0.6) rotate(-20deg)`, opacity: 0.2 },
+        {
+          transform: `translate(${before.left - after.left}px, ${before.top - after.top}px) scale(0.6) rotate(-20deg)`,
+          opacity: 0.2,
+        },
         { transform: "none", opacity: 1 },
       ],
       { duration: 450, easing: "cubic-bezier(.3,1.4,.5,1)" },

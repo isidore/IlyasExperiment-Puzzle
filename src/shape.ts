@@ -12,8 +12,17 @@ export interface PathSink {
  * Trace a jigsaw piece outline clockwise, with its body at (margin, margin)
  * of size width × height. Tabs reach out up to 0.25 × the edge length.
  */
-export function tracePiece(path: PathSink, edges: Edges, width: number, height: number, margin: number): void {
-  const left = margin, top = margin, right = margin + width, bottom = margin + height;
+export function tracePiece(
+  path: PathSink,
+  edges: Edges,
+  width: number,
+  height: number,
+  margin: number,
+): void {
+  const left = margin,
+    top = margin,
+    right = margin + width,
+    bottom = margin + height;
   path.moveTo(left, top);
   traceEdge(path, left, top, right, top, edges.top);
   traceEdge(path, right, top, right, bottom, edges.right);
@@ -27,7 +36,8 @@ function traceEdge(path: PathSink, x0: number, y0: number, x1: number, y1: numbe
     path.lineTo(x1, y1);
     return;
   }
-  const dx = x1 - x0, dy = y1 - y0;
+  const dx = x1 - x0,
+    dy = y1 - y0;
   // (dy, -dx) points outward for a clockwise outline in screen coordinates
   const at = (along: number, out: number): [number, number] => [
     x0 + dx * along + dy * out * shape,

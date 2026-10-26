@@ -158,7 +158,12 @@ function randomEdges(rows: number, cols: number, random: Random): EdgeShape[][] 
 }
 
 /** Evenly spaced spots filling the tray, one per piece, as close to square cells as the tray allows. */
-function trayGrid(count: number, tray: Rect, pieceWidth: number, pieceHeight: number): { x: number; y: number }[] {
+function trayGrid(
+  count: number,
+  tray: Rect,
+  pieceWidth: number,
+  pieceHeight: number,
+): { x: number; y: number }[] {
   const cols = Math.min(count, Math.ceil(Math.sqrt((count * tray.width) / tray.height)));
   const rows = Math.ceil(count / cols);
   const stepX = cols > 1 ? Math.max(0, tray.width - pieceWidth) / (cols - 1) : 0;
