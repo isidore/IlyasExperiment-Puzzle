@@ -66,12 +66,11 @@ function layout(): void {
     height: `${BOARD.height * s}px`,
   });
   const cell = `${100 / puzzle.size}% ${100 / puzzle.size}%`;
-  const layers = [];
-  if (gridToggle.checked) {
-    layers.push(`linear-gradient(#8885 1px, transparent 1px) 0 0 / ${cell}`);
-    layers.push(`linear-gradient(90deg, #8885 1px, transparent 1px) 0 0 / ${cell}`);
-  }
-  boardEl.style.background = layers.join(", ");
+  const gridLines = gridToggle.checked
+    ? ["linear-gradient(#8885 1px, transparent 1px)", "linear-gradient(90deg, #8885 1px, transparent 1px)"]
+    : [];
+  boardEl.style.backgroundImage = gridLines.join(", ");
+  boardEl.style.backgroundSize = gridLines.map(() => cell).join(", ");
   boardEl.classList.toggle("peek", peek);
   boardEl.style.setProperty("--picture", `url(${pictureUrl})`);
 

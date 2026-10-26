@@ -58,7 +58,7 @@ select {
   position: absolute;
   border-radius: 4px;
   outline: 2px dashed #8886;
-  background-color: var(--board) !important;
+  background-color: var(--board);
 }
 #board.peek::before {
   content: "";
