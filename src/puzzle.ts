@@ -43,23 +43,11 @@ export class Puzzle {
   ) {
     this.pieceWidth = board.width / size;
     this.pieceHeight = board.height / size;
-    const right = randomEdges(size, size - 1, random); // right[r][c]: edge between (r,c) and (r,c+1)
-    const down = randomEdges(size - 1, size, random); // down[r][c]: edge between (r,c) and (r+1,c)
+    const edges = randomEdgeGrid(size, random);
     const spots = shuffle(trayGrid(size * size, tray, this.pieceWidth, this.pieceHeight), random);
     for (let row = 0; row < size; row++) {
       for (let col = 0; col < size; col++) {
-        this.pieces.push({
-          row,
-          col,
-          ...spots[row * size + col],
-          locked: false,
-          edges: {
-            top: row > 0 ? opposite(down[row - 1][col]) : 0,
-            right: col < size - 1 ? right[row][col] : 0,
-            bottom: row < size - 1 ? down[row][col] : 0,
-            left: col > 0 ? opposite(right[row][col - 1]) : 0,
-          },
-        });
+        this.pieces.push({ row, col, ...spots[row * size + col], locked: false, edges: edges(row, col) });
       }
     }
   }
@@ -92,29 +80,26 @@ export class Puzzle {
     if (piece.locked) return "ignored";
     const cell = this.cellAt(x, y);
     if (!cell) {
-      piece.x = x;
-      piece.y = y;
-    } else {
-      const target = this.cellPosition(cell.row, cell.col);
-      const occupant = this.pieces.find((p) => p !== piece && p.x === target.x && p.y === target.y);
-      if (occupant?.locked || !this.fitsNeighbours(piece, cell.row, cell.col, occupant)) {
-        piece.x = from.x;
-        piece.y = from.y;
-        return "rejected";
-      } else {
-        if (occupant) {
-          occupant.x = from.x;
-          occupant.y = from.y;
-        }
-        piece.x = target.x;
-        piece.y = target.y;
-      }
+      moveTo(piece, { x, y });
+      return "moved";
     }
+    const target = this.cellPosition(cell.row, cell.col);
+    const occupant = this.pieces.find((p) => p !== piece && p.x === target.x && p.y === target.y);
+    if (occupant?.locked || !this.fitsNeighbours(piece, cell.row, cell.col, occupant)) {
+      moveTo(piece, from);
+      return "rejected";
+    }
+    if (occupant) moveTo(occupant, from);
+    moveTo(piece, target);
+    this.lockPiecesAtHome();
+    return piece.locked ? "locked" : "snapped";
+  }
+
+  private lockPiecesAtHome(): void {
     for (const p of this.pieces) {
       const home = this.home(p);
       if (p.x === home.x && p.y === home.y) p.locked = true;
     }
-    return piece.locked ? "locked" : cell ? "snapped" : "moved";
   }
 
   /** True when every piece already in a cell next to (row, col) meets this piece tab-to-hole. */
@@ -149,6 +134,23 @@ export class Puzzle {
 
 function opposite(shape: EdgeShape): EdgeShape {
   return -shape as EdgeShape;
+}
+
+function moveTo(piece: Piece, to: { x: number; y: number }): void {
+  piece.x = to.x;
+  piece.y = to.y;
+}
+
+/** Random tab/hole choices for every shared edge; returns each cell's four edges, flat on the border. */
+function randomEdgeGrid(size: number, random: Random): (row: number, col: number) => Edges {
+  const right = randomEdges(size, size - 1, random); // right[r][c]: edge between (r,c) and (r,c+1)
+  const down = randomEdges(size - 1, size, random); // down[r][c]: edge between (r,c) and (r+1,c)
+  return (row, col) => ({
+    top: row > 0 ? opposite(down[row - 1][col]) : 0,
+    right: col < size - 1 ? right[row][col] : 0,
+    bottom: row < size - 1 ? down[row][col] : 0,
+    left: col > 0 ? opposite(right[row][col - 1]) : 0,
+  });
 }
 
 function randomEdges(rows: number, cols: number, random: Random): EdgeShape[][] {
