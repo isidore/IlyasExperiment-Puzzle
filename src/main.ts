@@ -1,6 +1,7 @@
 import { Puzzle, type Piece } from "./puzzle";
 import { tracePiece } from "./shape";
 import { drawPicture } from "./picture";
+import { context2d, element } from "./dom";
 import "./style.css";
 
 // World units: the stage is 800 × 460, the board 400 × 400 at (30, 30).
@@ -8,11 +9,11 @@ const STAGE_WIDTH = 800;
 const BOARD = { x: 30, y: 30, width: 400, height: 400 };
 const TRAY = { x: 470, y: 20, width: 300, height: 420 };
 
-const stage = document.querySelector<HTMLDivElement>("#stage")!;
-const boardEl = document.querySelector<HTMLDivElement>("#board")!;
-const sizeSelect = document.querySelector<HTMLSelectElement>("#size")!;
-const gridToggle = document.querySelector<HTMLInputElement>("#grid")!;
-const statusEl = document.querySelector<HTMLSpanElement>("#status")!;
+const stage = element<HTMLDivElement>("#stage");
+const boardEl = element<HTMLDivElement>("#board");
+const sizeSelect = element<HTMLSelectElement>("#size");
+const gridToggle = element<HTMLInputElement>("#grid");
+const statusEl = element<HTMLSpanElement>("#status");
 const picture = drawPicture(BOARD.width, BOARD.height);
 const pictureUrl = picture.toDataURL();
 
@@ -39,7 +40,7 @@ function renderPiece(piece: Piece, margin: number): HTMLCanvasElement {
   canvas.className = "piece";
   canvas.width = w + 2 * margin;
   canvas.height = h + 2 * margin;
-  const g = canvas.getContext("2d")!;
+  const g = context2d(canvas);
   g.beginPath();
   tracePiece(g, piece.edges, w, h, margin);
   g.save();
@@ -89,22 +90,22 @@ function layout(): void {
 function isOpaqueAt(canvas: HTMLCanvasElement, clientX: number, clientY: number): boolean {
   const rect = canvas.getBoundingClientRect();
   const k = canvas.width / rect.width;
-  const alpha = canvas
-    .getContext("2d")!
-    .getImageData((clientX - rect.left) * k, (clientY - rect.top) * k, 1, 1).data[3];
+  const alpha = context2d(canvas).getImageData((clientX - rect.left) * k, (clientY - rect.top) * k, 1, 1)
+    .data[3];
   return alpha > 10;
 }
 
 /** The topmost loose piece whose visible shape (not its transparent margin) is under the pointer. */
 function pieceAt(clientX: number, clientY: number): [Piece, HTMLCanvasElement] | undefined {
-  const canvases = [...stage.querySelectorAll<HTMLCanvasElement>("canvas.piece:not(.locked)")].reverse();
-  for (const canvas of canvases) {
+  const topFirst = [...views].sort(([, a], [, b]) =>
+    a.canvas.compareDocumentPosition(b.canvas) & Node.DOCUMENT_POSITION_FOLLOWING ? 1 : -1,
+  );
+  for (const [piece, { canvas }] of topFirst) {
+    if (piece.locked) continue;
     const rect = canvas.getBoundingClientRect();
-    if (clientX < rect.left || clientX >= rect.right || clientY < rect.top || clientY >= rect.bottom)
-      continue;
-    if (!isOpaqueAt(canvas, clientX, clientY)) continue;
-    const piece = [...views].find(([, v]) => v.canvas === canvas)![0];
-    return [piece, canvas];
+    const inside =
+      clientX >= rect.left && clientX < rect.right && clientY >= rect.top && clientY < rect.bottom;
+    if (inside && isOpaqueAt(canvas, clientX, clientY)) return [piece, canvas];
   }
   return undefined;
 }
@@ -145,7 +146,7 @@ stage.addEventListener("pointerdown", (down) => {
 /** Burst of picture-coloured shards at a world point. */
 function explode(source: HTMLCanvasElement, x: number, y: number): void {
   const s = scale();
-  const g = source.getContext("2d")!;
+  const g = context2d(source);
   for (let i = 0; i < 28; i++) {
     const shard = document.createElement("div");
     shard.className = "shard";
@@ -196,8 +197,8 @@ function flyBack(canvas: HTMLCanvasElement): void {
   });
 }
 
-document.querySelector("#new")!.addEventListener("click", newPuzzle);
-document.querySelector("#peek")!.addEventListener("click", () => {
+element("#new").addEventListener("click", newPuzzle);
+element("#peek").addEventListener("click", () => {
   peek = !peek;
   layout();
 });

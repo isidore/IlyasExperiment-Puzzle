@@ -1,9 +1,11 @@
+import { context2d } from "./dom";
+
 /** A generated sunset picture, so the puzzle needs no image files. */
 export function drawPicture(width: number, height: number): HTMLCanvasElement {
   const canvas = document.createElement("canvas");
   canvas.width = width;
   canvas.height = height;
-  const g = canvas.getContext("2d")!;
+  const g = context2d(canvas);
   const sx = width / 400,
     sy = height / 400;
   g.scale(sx, sy);
