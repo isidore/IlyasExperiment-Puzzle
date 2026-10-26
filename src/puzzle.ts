@@ -34,6 +34,8 @@ export class Puzzle {
   readonly pieces: Piece[] = [];
   readonly pieceWidth: number;
   readonly pieceHeight: number;
+  /** Drops made so far, rejected ones included. */
+  moves = 0;
 
   constructor(
     readonly size: number,
@@ -78,6 +80,7 @@ export class Puzzle {
    */
   drop(piece: Piece, x: number, y: number, from: { x: number; y: number }): DropResult {
     if (piece.locked) return "ignored";
+    this.moves++;
     const cell = this.cellAt(x, y);
     if (!cell) {
       moveTo(piece, { x, y });

@@ -160,6 +160,16 @@ describe("Puzzle", () => {
     expect([a.x, a.y]).toEqual([0, 0]);
   });
 
+  it("counts every drop as a move, including rejected ones", () => {
+    const puzzle = newPuzzle(4);
+    const a = at(puzzle, 0, 0);
+    expect(puzzle.moves).toBe(0);
+    puzzle.drop(a, 600, 50, { x: a.x, y: a.y });
+    puzzle.drop(a, 0, 0, { x: 600, y: 50 });
+    puzzle.drop(a, 300, 300, { x: 0, y: 0 }); // locked: ignored, not a move
+    expect(puzzle.moves).toBe(2);
+  });
+
   it("is solved once every piece is home", () => {
     const puzzle = newPuzzle(3);
     expect(puzzle.isSolved()).toBe(false);
