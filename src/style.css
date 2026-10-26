@@ -10,7 +10,7 @@ button, select { font: inherit; padding: 6px 12px; border-radius: 6px; border: 1
 #stage { position: relative; width: 100%; max-width: 800px; aspect-ratio: 800 / 460; touch-action: none; user-select: none; }
 #board { position: absolute; border-radius: 4px; outline: 2px dashed #8886; background-color: var(--board) !important; }
 #board.peek::before { content: ""; position: absolute; inset: 0; background: var(--picture) 0 0 / 100% 100%; opacity: 0.3; }
-.piece { position: absolute; z-index: 10; cursor: grab; filter: drop-shadow(0 2px 3px #0006); }
-.piece.locked { z-index: 1; cursor: default; filter: none; }
-.piece.dragging { z-index: 1000; cursor: grabbing; filter: drop-shadow(0 8px 10px #0008); }
+.piece { position: absolute; z-index: 10; pointer-events: none; filter: drop-shadow(0 2px 3px #0006); }
+.piece.locked { z-index: 1; filter: none; }
+.piece.dragging { z-index: 1000; pointer-events: auto; cursor: grabbing; filter: drop-shadow(0 8px 10px #0008); }
 .shard { position: absolute; z-index: 2000; pointer-events: none; border-radius: 2px; }

@@ -29,7 +29,6 @@ function newPuzzle(): void {
     const canvas = renderPiece(piece, margin);
     stage.appendChild(canvas);
     views.set(piece, { canvas, margin });
-    enableDragging(piece, canvas);
   }
   layout();
 }
@@ -94,37 +93,51 @@ function isOpaqueAt(canvas: HTMLCanvasElement, clientX: number, clientY: number)
   return alpha > 10;
 }
 
-function enableDragging(piece: Piece, canvas: HTMLCanvasElement): void {
-  canvas.addEventListener("pointerdown", (down) => {
-    if (piece.locked || !isOpaqueAt(canvas, down.clientX, down.clientY)) return;
-    down.preventDefault();
-    const s = scale();
-    const from = { x: piece.x, y: piece.y };
-    const offsetX = down.clientX / s - piece.x;
-    const offsetY = down.clientY / s - piece.y;
-    canvas.classList.add("dragging");
-    canvas.setPointerCapture(down.pointerId);
-
-    const move = (e: PointerEvent) => {
-      piece.x = e.clientX / s - offsetX;
-      piece.y = e.clientY / s - offsetY;
-      layout();
-    };
-    const up = () => {
-      canvas.classList.remove("dragging");
-      canvas.removeEventListener("pointermove", move);
-      canvas.removeEventListener("pointerup", up);
-      const dropped = { x: piece.x, y: piece.y };
-      if (puzzle.drop(piece, dropped.x, dropped.y, from) === "rejected") {
-        explode(canvas, dropped.x + puzzle.pieceWidth / 2, dropped.y + puzzle.pieceHeight / 2);
-        flyBack(canvas);
-      }
-      layout();
-    };
-    canvas.addEventListener("pointermove", move);
-    canvas.addEventListener("pointerup", up);
-  });
+/** The topmost loose piece whose visible shape (not its transparent margin) is under the pointer. */
+function pieceAt(clientX: number, clientY: number): [Piece, HTMLCanvasElement] | undefined {
+  const canvases = [...stage.querySelectorAll<HTMLCanvasElement>("canvas.piece:not(.locked)")].reverse();
+  for (const canvas of canvases) {
+    const rect = canvas.getBoundingClientRect();
+    if (clientX < rect.left || clientX >= rect.right || clientY < rect.top || clientY >= rect.bottom) continue;
+    if (!isOpaqueAt(canvas, clientX, clientY)) continue;
+    const piece = [...views].find(([, v]) => v.canvas === canvas)![0];
+    return [piece, canvas];
+  }
+  return undefined;
 }
+
+stage.addEventListener("pointerdown", (down) => {
+  const hit = pieceAt(down.clientX, down.clientY);
+  if (!hit) return;
+  const [piece, canvas] = hit;
+  down.preventDefault();
+  stage.appendChild(canvas); // bring to front, and keep it there after the drop
+  const s = scale();
+  const from = { x: piece.x, y: piece.y };
+  const offsetX = down.clientX / s - piece.x;
+  const offsetY = down.clientY / s - piece.y;
+  canvas.classList.add("dragging");
+  canvas.setPointerCapture(down.pointerId);
+
+  const move = (e: PointerEvent) => {
+    piece.x = e.clientX / s - offsetX;
+    piece.y = e.clientY / s - offsetY;
+    layout();
+  };
+  const up = () => {
+    canvas.classList.remove("dragging");
+    canvas.removeEventListener("pointermove", move);
+    canvas.removeEventListener("pointerup", up);
+    const dropped = { x: piece.x, y: piece.y };
+    if (puzzle.drop(piece, dropped.x, dropped.y, from) === "rejected") {
+      explode(canvas, dropped.x + puzzle.pieceWidth / 2, dropped.y + puzzle.pieceHeight / 2);
+      flyBack(canvas);
+    }
+    layout();
+  };
+  canvas.addEventListener("pointermove", move);
+  canvas.addEventListener("pointerup", up);
+});
 
 /** Burst of picture-coloured shards at a world point. */
 function explode(source: HTMLCanvasElement, x: number, y: number): void {
