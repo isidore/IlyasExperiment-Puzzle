@@ -11,6 +11,27 @@ export function formatTime(seconds: number): string {
   return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, "0")}`;
 }
 
+/**
+ * Saves a new best time for this puzzle size and returns the previous best
+ * (undefined on a first solve, or when storage is unavailable).
+ */
+export function recordBestTime(
+  storage: Pick<Storage, "getItem" | "setItem"> | undefined,
+  size: number,
+  seconds: number,
+): number | undefined {
+  if (!storage) return undefined;
+  const key = `jigsaw-best-${size}`;
+  try {
+    const stored = storage.getItem(key);
+    const previous = stored === null ? undefined : Number(stored);
+    if (previous === undefined || seconds < previous) storage.setItem(key, String(seconds));
+    return previous;
+  } catch {
+    return undefined;
+  }
+}
+
 /** Every piece hops once, in a diagonal wave from the top-left corner. */
 export function danceWave(pieces: { canvas: HTMLCanvasElement; row: number; col: number }[]): void {
   for (const { canvas, row, col } of pieces) {

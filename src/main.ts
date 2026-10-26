@@ -2,7 +2,7 @@ import { Puzzle, type Piece } from "./puzzle";
 import { tracePiece } from "./shape";
 import { drawPicture } from "./picture";
 import { context2d, element } from "./dom";
-import { danceWave, showResultCard } from "./celebration";
+import { danceWave, recordBestTime, showResultCard } from "./celebration";
 import "./style.css";
 
 // World units: the stage is 800 × 460, the board 400 × 400 at (30, 30).
@@ -149,28 +149,23 @@ stage.addEventListener("pointerdown", (down) => {
   canvas.addEventListener("pointerup", up);
 });
 
+function safeStorage(): Storage | undefined {
+  try {
+    return localStorage;
+  } catch {
+    return undefined; // storage blocked (private window etc.)
+  }
+}
+
 function celebrate(): void {
   danceWave([...views].map(([piece, { canvas }]) => ({ canvas, row: piece.row, col: piece.col })));
   const seconds = (performance.now() - (startedAt ?? performance.now())) / 1000;
-  const bestSeconds = recordBestTime(puzzle.size, seconds);
+  const bestSeconds = recordBestTime(safeStorage(), puzzle.size, seconds);
   showResultCard(
     stage,
     { seconds, moves: puzzle.moves, pieces: puzzle.pieces.length, bestSeconds },
     newPuzzle,
   );
-}
-
-/** Saves a new best time per puzzle size; returns the previous best (undefined on a first solve). */
-function recordBestTime(size: number, seconds: number): number | undefined {
-  const key = `jigsaw-best-${size}`;
-  try {
-    const stored = localStorage.getItem(key);
-    const previous = stored === null ? undefined : Number(stored);
-    if (previous === undefined || seconds < previous) localStorage.setItem(key, String(seconds));
-    return previous;
-  } catch {
-    return undefined; // storage unavailable (private window etc.)
-  }
 }
 
 /** Burst of picture-coloured shards at a world point. */
