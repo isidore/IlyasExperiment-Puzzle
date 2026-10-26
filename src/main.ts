@@ -2,6 +2,7 @@ import { Puzzle, type Piece } from "./puzzle";
 import { tracePiece } from "./shape";
 import { drawPicture } from "./picture";
 import { context2d, element } from "./dom";
+import { danceWave, showResultCard } from "./celebration";
 import "./style.css";
 
 // World units: the stage is 800 × 460, the board 400 × 400 at (30, 30).
@@ -19,11 +20,14 @@ const pictureUrl = picture.toDataURL();
 
 let puzzle: Puzzle;
 let peek = false;
+let startedAt: number | undefined;
 const views = new Map<Piece, { canvas: HTMLCanvasElement; margin: number }>();
 
 function newPuzzle(): void {
   for (const v of views.values()) v.canvas.remove();
   views.clear();
+  for (const card of stage.querySelectorAll(".result-card")) card.remove();
+  startedAt = undefined;
   puzzle = new Puzzle(Number(sizeSelect.value), BOARD, TRAY);
   const margin = Math.max(puzzle.pieceWidth, puzzle.pieceHeight) * 0.3;
   for (const piece of puzzle.pieces) {
@@ -115,6 +119,7 @@ stage.addEventListener("pointerdown", (down) => {
   const [piece, canvas] = hit;
   down.preventDefault();
   stage.appendChild(canvas); // bring to front, and keep it there after the drop
+  startedAt ??= performance.now();
   const s = scale();
   const from = { x: piece.x, y: piece.y };
   const offsetX = down.clientX / s - piece.x;
@@ -132,15 +137,41 @@ stage.addEventListener("pointerdown", (down) => {
     canvas.removeEventListener("pointermove", move);
     canvas.removeEventListener("pointerup", up);
     const dropped = { x: piece.x, y: piece.y };
+    const wasSolved = puzzle.isSolved();
     if (puzzle.drop(piece, dropped.x, dropped.y, from) === "rejected") {
       explode(canvas, dropped.x + puzzle.pieceWidth / 2, dropped.y + puzzle.pieceHeight / 2);
       flyBack(canvas);
     }
     layout();
+    if (!wasSolved && puzzle.isSolved()) celebrate();
   };
   canvas.addEventListener("pointermove", move);
   canvas.addEventListener("pointerup", up);
 });
+
+function celebrate(): void {
+  danceWave([...views].map(([piece, { canvas }]) => ({ canvas, row: piece.row, col: piece.col })));
+  const seconds = (performance.now() - (startedAt ?? performance.now())) / 1000;
+  const bestSeconds = recordBestTime(puzzle.size, seconds);
+  showResultCard(
+    stage,
+    { seconds, moves: puzzle.moves, pieces: puzzle.pieces.length, bestSeconds },
+    newPuzzle,
+  );
+}
+
+/** Saves a new best time per puzzle size; returns the previous best (undefined on a first solve). */
+function recordBestTime(size: number, seconds: number): number | undefined {
+  const key = `jigsaw-best-${size}`;
+  try {
+    const stored = localStorage.getItem(key);
+    const previous = stored === null ? undefined : Number(stored);
+    if (previous === undefined || seconds < previous) localStorage.setItem(key, String(seconds));
+    return previous;
+  } catch {
+    return undefined; // storage unavailable (private window etc.)
+  }
+}
 
 /** Burst of picture-coloured shards at a world point. */
 function explode(source: HTMLCanvasElement, x: number, y: number): void {
