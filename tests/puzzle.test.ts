@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { Puzzle } from "./puzzle";
+import { Puzzle } from "../src/puzzle";
 
 const board = { x: 0, y: 0, width: 400, height: 400 };
 const tray = { x: 450, y: 0, width: 300, height: 400 };

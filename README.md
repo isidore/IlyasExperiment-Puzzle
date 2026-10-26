@@ -10,7 +10,7 @@ npm run dev        # local dev server
 ./build_and_test.sh  # unit tests + production build (same as CI)
 ```
 
-- `src/puzzle.ts`: the pure puzzle model (pieces, edges, snapping, solved state), unit-tested in `src/puzzle.test.ts`
+- `src/puzzle.ts`: the pure puzzle model (pieces, edges, snapping, solved state), unit-tested in `tests/puzzle.test.ts`
 - `src/shape.ts`: traces jigsaw piece outlines (tabs and holes)
 - `src/picture.ts`: the generated picture
 - `src/main.ts`: DOM rendering and dragging
