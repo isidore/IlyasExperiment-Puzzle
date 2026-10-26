@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Jigsaw Puzzle</title>
+  </head>
+  <body>
+    <h1>🧩 Jigsaw Puzzle</h1>
+    <div>Drag pieces onto the board. They snap to the grid and lock when they're in the right spot. Dropping on a loose piece swaps them.</div>
+    <div class="bar">
+      <label>Pieces
+        <select id="size">
+          <option value="3">3×3</option>
+          <option value="4" selected>4×4</option>
+          <option value="5">5×5</option>
+          <option value="6">6×6</option>
+        </select>
+      </label>
+      <button id="new">New puzzle</button>
+      <button id="peek">Peek image</button>
+      <label><input type="checkbox" id="grid" checked /> Show grid</label>
+      <span id="status"></span>
+    </div>
+    <div id="stage"><div id="board"></div></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
