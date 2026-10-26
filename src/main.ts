@@ -21,7 +21,7 @@ let peek = false;
 const views = new Map<Piece, { canvas: HTMLCanvasElement; margin: number }>();
 
 function newPuzzle(): void {
-  views.forEach((v) => v.canvas.remove());
+  for (const v of views.values()) v.canvas.remove();
   views.clear();
   puzzle = new Puzzle(Number(sizeSelect.value), BOARD, TRAY);
   const margin = Math.max(puzzle.pieceWidth, puzzle.pieceHeight) * 0.3;

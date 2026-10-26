@@ -44,7 +44,9 @@ export function drawPicture(width: number, height: number): HTMLCanvasElement {
 function mountains(g: CanvasRenderingContext2D, color: string, ridge: [number, number][]): void {
   g.fillStyle = color;
   g.beginPath();
-  ridge.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y)));
+  const [[startX, startY], ...rest] = ridge;
+  g.moveTo(startX, startY);
+  for (const [x, y] of rest) g.lineTo(x, y);
   g.lineTo(400, 400);
   g.lineTo(0, 400);
   g.fill();
